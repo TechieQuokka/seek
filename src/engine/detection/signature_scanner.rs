@@ -58,19 +58,38 @@ impl SignatureScanner {
             info!("Hash-based detection: {} for {}", signature.name, file_path.display());
         }
 
+        // EICAR 파일 직접 검사 (최우선 처리)
+        if let Ok(content) = std::fs::read(file_path) {
+            if content.len() < 1024 { // 작은 파일만 직접 검사
+                let eicar_signature = b"X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*";
+                if content.windows(eicar_signature.len()).any(|window| window == eicar_signature) {
+                    results.push(DetectionResult {
+                        signature_name: "EICAR-Test-File".to_string(),
+                        is_threat: true,
+                        confidence: 1.0,
+                        description: "EICAR antivirus test file detected".to_string(),
+                    });
+                    info!("EICAR test file detected: {}", file_path.display());
+                    return Ok(results); // EICAR 발견 시 즉시 반환
+                }
+            }
+        }
+
         // 패턴 기반 시그니처 검사 (메모리 매핑을 사용하여 효율적인 파일 처리)
         if let Ok(file) = std::fs::File::open(file_path) {
-            if let Ok(mmap) = unsafe { memmap2::MmapOptions::new().map(&file) } {
-                for signature in &self.pattern_signatures {
-                    if let Some(pattern) = &signature.pattern {
-                        if self.check_pattern(&*mmap, pattern) {
-                            results.push(DetectionResult {
-                                signature_name: signature.name.clone(),
-                                is_threat: true,
-                                confidence: 0.8,
-                                description: format!("Pattern match: {}", signature.description),
-                            });
-                            info!("Pattern-based detection: {} for {}", signature.name, file_path.display());
+            if file.metadata().map_or(false, |m| m.len() <= 10485760) { // 10MB 제한
+                if let Ok(mmap) = unsafe { memmap2::MmapOptions::new().map(&file) } {
+                    for signature in &self.pattern_signatures {
+                        if let Some(pattern) = &signature.pattern {
+                            if self.check_pattern(&*mmap, pattern) {
+                                results.push(DetectionResult {
+                                    signature_name: signature.name.clone(),
+                                    is_threat: true,
+                                    confidence: 0.8,
+                                    description: format!("Pattern match: {}", signature.description),
+                                });
+                                info!("Pattern-based detection: {} for {}", signature.name, file_path.display());
+                            }
                         }
                     }
                 }
@@ -107,10 +126,12 @@ impl SignatureScanner {
             });
         }
 
-        // 정규표현식 패턴 (간단한 구현)
-        if let Ok(content_str) = std::str::from_utf8(content) {
-            if let Ok(regex) = regex::Regex::new(pattern) {
-                return regex.is_match(content_str);
+        // 정규표현식 패턴 (간단한 구현) - 크기 제한 추가
+        if content.len() <= 1048576 { // 1MB 제한
+            if let Ok(content_str) = std::str::from_utf8(content) {
+                if let Ok(regex) = regex::Regex::new(pattern) {
+                    return regex.is_match(content_str);
+                }
             }
         }
 

@@ -96,6 +96,35 @@ impl ScannerService {
     ) {
         debug!("Scanning file: {}", file_path.display());
 
+        // 타임아웃 설정 (30초)
+        let timeout_duration = std::time::Duration::from_secs(30);
+        let scan_future = Self::scan_file_inner(file_path.clone(), scanner, analyzer, result_mutex.clone(), scan_config);
+
+        match tokio::time::timeout(timeout_duration, scan_future).await {
+            Ok(_) => {
+                debug!("File scan completed: {}", file_path.display());
+            }
+            Err(_) => {
+                warn!("File scan timed out: {}", file_path.display());
+                let error = ScanError::new(
+                    file_path,
+                    ScanErrorType::Timeout,
+                    "File scan timed out after 30 seconds".to_string(),
+                );
+                let mut result = result_mutex.lock().await;
+                result.add_error(error);
+            }
+        }
+    }
+
+    async fn scan_file_inner(
+        file_path: PathBuf,
+        scanner: Arc<SignatureScanner>,
+        analyzer: Arc<FileAnalyzer>,
+        result_mutex: Arc<Mutex<ScanResult>>,
+        scan_config: &ScanConfig,
+    ) {
+
         // 파일 크기 검사
         if let Ok(metadata) = std::fs::metadata(&file_path) {
             if metadata.len() > scan_config.max_file_size {

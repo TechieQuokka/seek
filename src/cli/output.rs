@@ -30,31 +30,31 @@ impl OutputFormatter {
 
         // 스캔 결과 헤더
         output.push_str(&format!(
-            "{}\\n",
+            "{}\n",
             "┌─────────────────────────────────────────────────────────────┐".blue()
         ));
         output.push_str(&format!(
-            "{}\\n",
+            "{}\n",
             "│                        Scan Results                         │".blue().bold()
         ));
         output.push_str(&format!(
-            "{}\\n",
+            "{}\n",
             "├─────────────────────────────────────────────────────────────┤".blue()
         ));
 
         // 기본 정보
         output.push_str(&format!(
-            "│ Scan ID: {}{}│\\n",
+            "│ Scan ID: {}{}│\n",
             result.id.cyan(),
             " ".repeat(45 - result.id.len())
         ));
         output.push_str(&format!(
-            "│ Type: {}{}│\\n",
+            "│ Type: {}{}│\n",
             result.scan_type.to_string().cyan(),
             " ".repeat(54 - result.scan_type.to_string().len())
         ));
         output.push_str(&format!(
-            "│ Status: {}{}│\\n",
+            "│ Status: {}{}│\n",
             match result.status {
                 crate::data::models::scan_result::ScanStatus::Completed => "COMPLETED".green(),
                 crate::data::models::scan_result::ScanStatus::Running => "RUNNING".yellow(),
@@ -67,21 +67,21 @@ impl OutputFormatter {
 
         if let Some(duration) = &result.duration {
             output.push_str(&format!(
-                "│ Duration: {}{}│\\n",
+                "│ Duration: {}{}│\n",
                 format!("{:.2}s", duration.as_secs_f64()).cyan(),
                 " ".repeat(50 - format!("{:.2}s", duration.as_secs_f64()).len())
             ));
         }
 
         output.push_str(&format!(
-            "{}\\n",
+            "{}\n",
             "├─────────────────────────────────────────────────────────────┤".blue()
         ));
 
         // 요약 정보
         let summary = &result.summary;
         output.push_str(&format!(
-            "│ Files Scanned: {}{}│\\n",
+            "│ Files Scanned: {}{}│\n",
             summary.files_scanned.to_string().cyan(),
             " ".repeat(46 - summary.files_scanned.to_string().len())
         ));
@@ -92,30 +92,30 @@ impl OutputFormatter {
             summary.threats_found.to_string().green()
         };
         output.push_str(&format!(
-            "│ Threats Found: {}{}│\\n",
+            "│ Threats Found: {}{}│\n",
             threats_color,
             " ".repeat(46 - summary.threats_found.to_string().len())
         ));
 
         output.push_str(&format!(
-            "│ Quarantined: {}{}│\\n",
+            "│ Quarantined: {}{}│\n",
             summary.threats_quarantined.to_string().yellow(),
             " ".repeat(48 - summary.threats_quarantined.to_string().len())
         ));
         output.push_str(&format!(
-            "│ Errors: {}{}│\\n",
+            "│ Errors: {}{}│\n",
             summary.errors_encountered.to_string().red(),
             " ".repeat(52 - summary.errors_encountered.to_string().len())
         ));
 
         output.push_str(&format!(
-            "{}\\n",
+            "{}\n",
             "└─────────────────────────────────────────────────────────────┘".blue()
         ));
 
         // 위협 목록
         if !result.threats.is_empty() {
-            output.push_str("\\n");
+            output.push_str("\n");
             output.push_str(&Self::format_threats_table(&result.threats)?);
         }
 
@@ -161,7 +161,7 @@ impl OutputFormatter {
             .with(Style::rounded())
             .to_string();
 
-        Ok(format!("{}\\n{}", "🦠 Detected Threats:".red().bold(), table))
+        Ok(format!("{}\n{}", "🦠 Detected Threats:".red().bold(), table))
     }
 
     fn format_scan_result_json(result: &ScanResult) -> Result<String> {
@@ -200,7 +200,7 @@ impl OutputFormatter {
         let bar = "█".repeat(filled_length as usize) + &"░".repeat((bar_length - filled_length) as usize);
 
         print!(
-            "\\r🔍 Scanning: {} [{bar}] {}% ({}/{} files) - {}",
+            "\r🔍 Scanning: {} [{bar}] {}% ({}/{} files) - {}",
             "Progress".cyan(),
             percentage,
             current,

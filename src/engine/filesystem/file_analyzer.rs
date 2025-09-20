@@ -125,7 +125,7 @@ impl FileAnalyzer {
     }
 
     fn calculate_bytes_entropy(&self, data: &[u8]) -> f64 {
-        if data.is_empty() {
+        if data.is_empty() || data.len() > 1048576 { // 1MB 제한
             return 0.0;
         }
 
@@ -140,11 +140,22 @@ impl FileAnalyzer {
         for &count in &counts {
             if count > 0 {
                 let probability = count as f64 / length;
-                entropy -= probability * probability.log2();
+                // NaN이나 무한대 방지
+                if probability > 0.0 && probability.is_finite() {
+                    let log_prob = probability.log2();
+                    if log_prob.is_finite() {
+                        entropy -= probability * log_prob;
+                    }
+                }
             }
         }
 
-        entropy
+        // 결과값 검증
+        if entropy.is_finite() && entropy >= 0.0 {
+            entropy
+        } else {
+            0.0
+        }
     }
 
     pub fn get_file_risk_score(&self, analysis: &FileAnalysis) -> u8 {
