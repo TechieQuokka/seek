@@ -11,8 +11,12 @@ use std::sync::Arc;
 pub async fn execute(args: ScanArgs, config: &AppConfig) -> Result<()> {
     OutputFormatter::print_info("Starting scan...");
 
-    // 스캔 대상 경로 결정
-    let target_path = args.path.unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
+    // 스캔 대상 경로 결정 (--file 옵션 우선 처리)
+    let target_path = if let Some(ref file_path) = args.file {
+        file_path.clone()
+    } else {
+        args.path.unwrap_or_else(|| std::env::current_dir().unwrap_or_default())
+    };
 
     // 스캔 타입 결정
     let scan_type = if args.quick {
@@ -41,15 +45,45 @@ pub async fn execute(args: ScanArgs, config: &AppConfig) -> Result<()> {
         scan_config.include_patterns = args.include;
     }
 
-    // 스캔 실행
-    let mut scan_result = match scanner_service.scan_path(&target_path, &scan_config).await {
-        Ok(result) => result,
-        Err(e) => {
-            // 에러 발생 시 기본 결과 생성
-            let mut error_result = ScanResult::new(scan_type, target_path.clone());
-            error_result.status = ScanStatus::Failed;
-            OutputFormatter::print_error(&format!("Scan failed: {}", e));
-            return Err(e);
+    // 스캔 실행 (단일 파일 vs 경로 구분)
+    let mut scan_result = if args.file.is_some() && target_path.is_file() {
+        // 단일 파일 스캔
+        match scanner_service.scan_file_only(&target_path).await {
+            Ok(threats) => {
+                let mut result = ScanResult::new(scan_type, target_path.clone());
+                result.status = ScanStatus::Running;
+
+                // 파일 정보 추가
+                if let Ok(metadata) = std::fs::metadata(&target_path) {
+                    result.add_scanned_size(metadata.len());
+                }
+                result.increment_files_scanned();
+
+                // 위협 정보 추가
+                for threat in threats {
+                    result.add_threat(threat);
+                }
+
+                result
+            }
+            Err(e) => {
+                let mut error_result = ScanResult::new(scan_type, target_path.clone());
+                error_result.status = ScanStatus::Failed;
+                OutputFormatter::print_error(&format!("File scan failed: {}", e));
+                return Err(e);
+            }
+        }
+    } else {
+        // 경로 스캔
+        match scanner_service.scan_path(&target_path, &scan_config).await {
+            Ok(result) => result,
+            Err(e) => {
+                // 에러 발생 시 기본 결과 생성
+                let mut error_result = ScanResult::new(scan_type, target_path.clone());
+                error_result.status = ScanStatus::Failed;
+                OutputFormatter::print_error(&format!("Scan failed: {}", e));
+                return Err(e);
+            }
         }
     };
 
