@@ -2,10 +2,10 @@
 name = "seek"
 version = "0.1.0"
 edition = "2021"
-authors = ["Seek Team <seek@example.com>"]
+authors = ["seung <seung@your-email.com>"]
 description = "고성능 Rust 백신 CLI 도구 - 메모리 안전성과 성능을 활용한 현대적인 백신 솔루션"
 license = "MIT"
-repository = "https://github.com/username/seek"
+repository = "https://github.com/TechieQuokka/seek"
 readme = "README.md"
 keywords = ["antivirus", "security", "malware", "cli", "rust"]
 categories = ["command-line-utilities", "security"]

@@ -26,7 +26,7 @@ Seek은 Rust의 메모리 안전성과 성능을 활용하여 구축된 현대�
 cargo install seek
 
 # 소스에서 빌드
-git clone https://github.com/username/seek.git
+git clone https://github.com/TechieQuokka/seek.git
 cd seek
 cargo build --release
 ```
@@ -128,7 +128,7 @@ seek update
 
 ## 📞 연락처
 
-프로젝트 링크: [https://github.com/username/seek](https://github.com/username/seek)
+프로젝트 링크: [https://github.com/TechieQuokka/seek](https://github.com/TechieQuokka/seek)
 
 ---
 
