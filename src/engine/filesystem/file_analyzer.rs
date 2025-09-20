@@ -174,11 +174,10 @@ impl FileAnalyzer {
         }
 
         // 파일 크기 (너무 작거나 큰 실행 파일은 의심)
-        if analysis.is_executable {
-            if analysis.file_size < 1024 || analysis.file_size > 100 * 1024 * 1024 {
+        if analysis.is_executable
+            && (analysis.file_size < 1024 || analysis.file_size > 100 * 1024 * 1024) {
                 risk_score += 2;
             }
-        }
 
         // MIME 타입 기반 위험도
         match analysis.mime_type.as_str() {

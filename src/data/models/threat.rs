@@ -129,3 +129,16 @@ impl std::fmt::Display for ThreatSeverity {
         }
     }
 }
+
+impl std::fmt::Display for DetectionMethod {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DetectionMethod::Signature => write!(f, "Signature"),
+            DetectionMethod::Heuristic => write!(f, "Heuristic"),
+            DetectionMethod::Yara => write!(f, "Yara"),
+            DetectionMethod::ClamAV => write!(f, "ClamAV"),
+            DetectionMethod::VirusTotal => write!(f, "VirusTotal"),
+            DetectionMethod::Custom(name) => write!(f, "Custom({})", name),
+        }
+    }
+}

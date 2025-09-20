@@ -28,6 +28,9 @@ pub enum Error {
     #[error("Engine error: {0}")]
     Engine(String),
 
+    #[error("Other error: {0}")]
+    Other(String),
+
     #[error("Database error: {0}")]
     Database(String),
 
@@ -42,6 +45,15 @@ pub enum Error {
 
     #[error("Regex error: {0}")]
     Regex(#[from] regex::Error),
+
+    #[error("File watcher error: {0}")]
+    FileWatcher(#[from] notify::Error),
+
+    #[error("Job scheduler error: {0}")]
+    JobScheduler(String),
+
+    #[error("TOML serialization error: {0}")]
+    TomlSer(#[from] toml::ser::Error),
 
     #[error("Unknown error: {0}")]
     Unknown(String),

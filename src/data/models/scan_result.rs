@@ -27,7 +27,7 @@ pub enum ScanType {
     Scheduled,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ScanSummary {
     pub files_scanned: u64,
     pub directories_scanned: u64,
@@ -120,21 +120,6 @@ impl ScanResult {
     }
 }
 
-impl Default for ScanSummary {
-    fn default() -> Self {
-        Self {
-            files_scanned: 0,
-            directories_scanned: 0,
-            threats_found: 0,
-            threats_quarantined: 0,
-            threats_cleaned: 0,
-            threats_deleted: 0,
-            files_skipped: 0,
-            errors_encountered: 0,
-            total_size_scanned: 0,
-        }
-    }
-}
 
 impl ScanError {
     pub fn new(file_path: PathBuf, error_type: ScanErrorType, message: String) -> Self {

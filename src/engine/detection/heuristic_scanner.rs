@@ -72,33 +72,31 @@ impl HeuristicScanner {
             let lower_filename = filename.to_lowercase();
 
             // 이중 확장자 검사
-            if filename.matches('.').count() >= 2 {
-                if lower_filename.ends_with(".exe") || lower_filename.ends_with(".scr") ||
-                   lower_filename.ends_with(".bat") || lower_filename.ends_with(".cmd") ||
-                   lower_filename.ends_with(".pif") {
-                    results.push(HeuristicResult {
-                        rule_name: "Double-Extension".to_string(),
-                        is_suspicious: true,
-                        confidence: 0.9,
-                        description: "File has suspicious double extension".to_string(),
-                        risk_score: 8,
-                    });
-                }
+            if filename.matches('.').count() >= 2 &&
+                (lower_filename.ends_with(".exe") || lower_filename.ends_with(".scr") ||
+                    lower_filename.ends_with(".bat") || lower_filename.ends_with(".cmd") ||
+                    lower_filename.ends_with(".pif")) {
+                results.push(HeuristicResult {
+                    rule_name: "Double-Extension".to_string(),
+                    is_suspicious: true,
+                    confidence: 0.9,
+                    description: "File has suspicious double extension".to_string(),
+                    risk_score: 8,
+                });
             }
 
             // 시스템 파일 위장
             let system_files = ["svchost.exe", "explorer.exe", "winlogon.exe", "csrss.exe"];
-            if system_files.iter().any(|&sf| lower_filename == sf) {
-                if !file_path.to_string_lossy().to_lowercase().contains("system32") &&
+            if system_files.iter().any(|&sf| lower_filename == sf)
+                && !file_path.to_string_lossy().to_lowercase().contains("system32") &&
                    !file_path.to_string_lossy().to_lowercase().contains("syswow64") {
-                    results.push(HeuristicResult {
-                        rule_name: "System-File-Impersonation".to_string(),
-                        is_suspicious: true,
-                        confidence: 0.8,
-                        description: "File impersonating system executable in wrong location".to_string(),
-                        risk_score: 9,
-                    });
-                }
+                results.push(HeuristicResult {
+                    rule_name: "System-File-Impersonation".to_string(),
+                    is_suspicious: true,
+                    confidence: 0.8,
+                    description: "File impersonating system executable in wrong location".to_string(),
+                    risk_score: 9,
+                });
             }
 
             // 의심스러운 파일명 패턴
@@ -123,7 +121,7 @@ impl HeuristicScanner {
             // 랜덤한 파일명 패턴 (길이가 길고 무작위 문자)
             if filename.len() > 20 && filename.chars().filter(|c| c.is_alphanumeric()).count() > 15 {
                 let alpha_ratio = filename.chars().filter(|c| c.is_alphabetic()).count() as f32 / filename.len() as f32;
-                if alpha_ratio < 0.3 || alpha_ratio > 0.9 {
+                if !(0.3..=0.9).contains(&alpha_ratio) {
                     results.push(HeuristicResult {
                         rule_name: "Random-Filename".to_string(),
                         is_suspicious: true,
@@ -161,7 +159,7 @@ impl HeuristicScanner {
         }
 
         // 비정상적으로 큰 스크립트 파일
-        if analysis.file_path.extension().and_then(|ext| ext.to_str()).map_or(false, |ext| {
+        if analysis.file_path.extension().and_then(|ext| ext.to_str()).is_some_and(|ext| {
             matches!(ext.to_lowercase().as_str(), "ps1" | "vbs" | "js" | "bat" | "cmd")
         }) && analysis.file_size > 100_000 {
             results.push(HeuristicResult {

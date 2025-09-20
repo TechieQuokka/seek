@@ -115,7 +115,7 @@ pub enum MonitorCommands {
     Logs(MonitorLogsArgs),
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 pub struct MonitorStartArgs {
     /// 모니터링할 경로
     #[arg(value_name = "PATH")]
@@ -257,7 +257,7 @@ pub enum ConfigCommands {
     Import { file: PathBuf },
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 pub struct ReportArgs {
     /// 리포트 타입
     #[arg(long, value_enum)]

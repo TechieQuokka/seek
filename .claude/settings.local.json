@@ -33,7 +33,11 @@
       "Bash(C:UsersseungRustLaboratoryprojectSeektargetreleaseseek.exe scan)",
       "Bash(C:UsersseungRustLaboratoryprojectSeektargetreleaseseek.exe scan C:UsersseungRustTest)",
       "Bash(cmd /c:*)",
-      "Bash(target/release/seek.exe scan:*)"
+      "Bash(target/release/seek.exe scan:*)",
+      "Bash(timeout 5 cargo run monitor start ~/Downloads)",
+      "Read(//c/Users/seung/Rust/Test/정상 파일/**)",
+      "Bash(target\\debug\\seek.exe scan:*)",
+      "Bash(.targetdebugseek.exe scan --file \"C:\\Users\\seung\\Downloads\\chess-game.html\" --format table)"
     ],
     "deny": [],
     "ask": []

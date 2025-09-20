@@ -107,11 +107,11 @@ impl SignatureScanner {
 
         // 패턴 기반 시그니처 검사 (메모리 매핑을 사용하여 효율적인 파일 처리)
         if let Ok(file) = std::fs::File::open(file_path) {
-            if file.metadata().map_or(false, |m| m.len() <= 10485760) { // 10MB 제한
+            if file.metadata().is_ok_and(|m| m.len() <= 10485760) { // 10MB 제한
                 if let Ok(mmap) = unsafe { memmap2::MmapOptions::new().map(&file) } {
                     for signature in &self.pattern_signatures {
                         if let Some(pattern) = &signature.pattern {
-                            if self.check_pattern(&*mmap, pattern) {
+                            if self.check_pattern(&mmap, pattern) {
                                 results.push(DetectionResult {
                                     signature_name: signature.name.clone(),
                                     is_threat: true,

@@ -102,14 +102,31 @@ pub async fn execute(args: ScanArgs, config: &AppConfig) -> Result<()> {
 
     // 위협 발견 시 격리 처리
     if args.quarantine && !scan_result.threats.is_empty() {
-                OutputFormatter::print_info("Quarantining detected threats...");
+        OutputFormatter::print_info("Quarantining detected threats...");
 
-                // TODO: 격리 서비스 구현 후 연동
-                OutputFormatter::print_success(&format!(
-                    "Quarantined {} threats",
-                    scan_result.threats.len()
-                ));
+        let quarantine_service = crate::services::quarantine_service::QuarantineService::new(config.clone())?;
+        let mut quarantined_count = 0;
+
+        for threat in &scan_result.threats {
+            match quarantine_service.quarantine_file(&threat.file_path, threat.clone()).await {
+                Ok(_) => {
+                    quarantined_count += 1;
+                    OutputFormatter::print_success(&format!("✅ Quarantined: {}", threat.file_path.display()));
+                }
+                Err(e) => {
+                    OutputFormatter::print_error(&format!("❌ Failed to quarantine {}: {}", threat.file_path.display(), e));
+                }
             }
+        }
+
+        if quarantined_count > 0 {
+            OutputFormatter::print_success(&format!(
+                "✅ Successfully quarantined {}/{} threats",
+                quarantined_count,
+                scan_result.threats.len()
+            ));
+        }
+    }
 
             // 스캔 결과에 따른 종료 코드
     if scan_result.summary.threats_found > 0 {

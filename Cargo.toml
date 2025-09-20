@@ -64,6 +64,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tabled = "0.14"
 indicatif = "0.17"
 colored = "2.0"
+unicode-width = "0.1"
 
 # Error Handling
 anyhow = "1.0"
@@ -80,6 +81,7 @@ elf = { version = "0.7", optional = true }
 # Additional useful dependencies - only what we actually use
 memmap2 = "0.9"  # Memory mapping for efficient large file processing
 mime_guess = "2.0"  # MIME type detection
+html-escape = "0.2"  # HTML escaping for report generation
 
 # Compression
 flate2 = "1.0"
