@@ -24,12 +24,16 @@
       "Read(//c/Users/seung/Downloads/**)",
       "Bash(\"C:\\Users\\seung\\Rust\\Laboratory\\project\\Seek\\target\\debug\\seek.exe\" scan --file \"desktop.ini\")",
       "Bash(\"C:\\Users\\seung\\Rust\\Laboratory\\project\\Seek\\target\\debug\\seek.exe\" scan --file \"chess-game.html\")",
-      "Bash(\"C:\\Users\\seung\\Rust\\Laboratory\\project\\Seek\\target\\debug\\seek.exe\" scan --file \"IP-Time 관련 정보.txt\")",
       "Bash(\"C:\\Users\\seung\\Rust\\Laboratory\\project\\Seek\\target\\debug\\seek.exe\" scan --file \"Cambridge - English Grammar in Use (Intermediate) (2005).pdf\")",
-      "Bash(\"C:\\Users\\seung\\Rust\\Laboratory\\project\\Seek\\target\\debug\\seek.exe\" scan --file \"Overlord.The.Scared.Kingdom.2024.1080p.ATVP.WEB-DL.JPN.DD5.1.H.264-ToonsHub.mkv\")",
       "Bash(\"C:\\Users\\seung\\Rust\\Laboratory\\project\\Seek\\target\\debug\\seek.exe\" scan --file \"C:\\Users\\seung\\Downloads\\desktop.ini\")",
       "Bash(\"C:\\Users\\seung\\Rust\\Laboratory\\project\\Seek\\target\\debug\\seek.exe\" scan --file \"C:\\Users\\seung\\Downloads\\chess-game.html\" --format json)",
-      "Bash(git tag:*)"
+      "Bash(git tag:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(copy:*)",
+      "Bash(C:UsersseungRustLaboratoryprojectSeektargetreleaseseek.exe scan)",
+      "Bash(C:UsersseungRustLaboratoryprojectSeektargetreleaseseek.exe scan C:UsersseungRustTest)",
+      "Bash(cmd /c:*)",
+      "Bash(target/release/seek.exe scan:*)"
     ],
     "deny": [],
     "ask": []
