@@ -1,0 +1,107 @@
+[package]
+name = "seek"
+version = "0.1.0"
+edition = "2021"
+authors = ["Seek Team <seek@example.com>"]
+description = "고성능 Rust 백신 CLI 도구 - 메모리 안전성과 성능을 활용한 현대적인 백신 솔루션"
+license = "MIT"
+repository = "https://github.com/username/seek"
+readme = "README.md"
+keywords = ["antivirus", "security", "malware", "cli", "rust"]
+categories = ["command-line-utilities", "security"]
+
+[dependencies]
+# CLI Framework
+clap = { version = "4.4", features = ["derive", "color", "suggestions"] }
+dialoguer = "0.11"
+console = "0.15"
+
+# Async Runtime
+tokio = { version = "1.35", features = ["full"] }
+rayon = "1.8"
+
+# File System
+notify = "6.1"
+notify-debouncer-mini = "0.4"
+walkdir = "2.4"
+glob = "0.3"
+
+# Antivirus & Security
+clamav-rs = { version = "0.3", optional = true }
+clamav-sys = { version = "0.4", optional = true }
+clamav-client = { version = "0.3", optional = true }
+virustotal-rs = { version = "0.3", optional = true }
+vt3 = { version = "0.9", optional = true }
+yara = { version = "0.20", optional = true }
+
+# Security & Crypto
+sha2 = "0.10"
+md-5 = "0.10"
+blake3 = "1.5"
+regex = "1.10"
+aho-corasick = "1.1"
+
+# Data & Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite"], optional = true }
+
+# Time & Scheduling
+chrono = { version = "0.4", features = ["serde"] }
+tokio-cron-scheduler = "0.9"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# UI & Output
+tabled = "0.14"
+indicatif = "0.17"
+colored = "2.0"
+
+# Error Handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Networking
+reqwest = { version = "0.11", features = ["json"], optional = true }
+
+# Binary Analysis
+goblin = "0.8"
+pelite = { version = "0.10", optional = true }
+elf = { version = "0.7", optional = true }
+
+# Compression
+flate2 = "1.0"
+zip = { version = "0.6", optional = true }
+
+[dev-dependencies]
+criterion = "0.5"
+mockall = "0.12"
+proptest = "1.4"
+assert_cmd = "2.0"
+predicates = "3.0"
+tempfile = "3.8"
+
+[[bin]]
+name = "seek"
+path = "src/main.rs"
+
+[features]
+default = ["clamav", "virustotal", "database"]
+clamav = ["clamav-rs", "clamav-sys", "clamav-client"]
+virustotal = ["virustotal-rs", "vt3", "reqwest"]
+yara-support = ["yara"]
+binary-analysis = ["pelite", "elf"]
+database = ["sqlx"]
+compression = ["zip"]
+full = ["clamav", "virustotal", "yara-support", "binary-analysis", "database", "compression"]
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+debug = true
