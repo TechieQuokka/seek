@@ -4,6 +4,7 @@ use crate::data::models::{
     threat::{DetectionMethod, Threat, ThreatAction, ThreatSeverity, ThreatType},
 };
 use crate::engine::detection::signature_scanner::SignatureScanner;
+use crate::engine::detection::heuristic_scanner::HeuristicScanner;
 use crate::engine::filesystem::file_analyzer::FileAnalyzer;
 use crate::error::Result;
 use std::path::{Path, PathBuf};
@@ -15,6 +16,7 @@ use walkdir::WalkDir;
 pub struct ScannerService {
     config: Arc<AppConfig>,
     signature_scanner: Arc<SignatureScanner>,
+    heuristic_scanner: Arc<HeuristicScanner>,
     file_analyzer: Arc<FileAnalyzer>,
 }
 
@@ -22,6 +24,7 @@ impl ScannerService {
     pub fn new(config: Arc<AppConfig>) -> Self {
         Self {
             signature_scanner: Arc::new(SignatureScanner::new()),
+            heuristic_scanner: Arc::new(HeuristicScanner::new()),
             file_analyzer: Arc::new(FileAnalyzer::new()),
             config,
         }
@@ -57,13 +60,14 @@ impl ScannerService {
         for file_path in files {
             let permit = semaphore.clone().acquire_owned().await.unwrap();
             let scanner = self.signature_scanner.clone();
+            let heuristic = self.heuristic_scanner.clone();
             let analyzer = self.file_analyzer.clone();
             let result_ref = result_mutex.clone();
             let scan_config = scan_config.clone();
 
             let task = tokio::spawn(async move {
                 let _permit = permit;
-                Self::scan_file(file_path, scanner, analyzer, result_ref, &scan_config).await
+                Self::scan_file(file_path, scanner, heuristic, analyzer, result_ref, &scan_config).await
             });
 
             tasks.push(task);
@@ -90,6 +94,7 @@ impl ScannerService {
     async fn scan_file(
         file_path: PathBuf,
         scanner: Arc<SignatureScanner>,
+        heuristic: Arc<HeuristicScanner>,
         analyzer: Arc<FileAnalyzer>,
         result_mutex: Arc<Mutex<ScanResult>>,
         scan_config: &ScanConfig,
@@ -98,7 +103,7 @@ impl ScannerService {
 
         // 타임아웃 설정 (30초)
         let timeout_duration = std::time::Duration::from_secs(30);
-        let scan_future = Self::scan_file_inner(file_path.clone(), scanner, analyzer, result_mutex.clone(), scan_config);
+        let scan_future = Self::scan_file_inner(file_path.clone(), scanner, heuristic, analyzer, result_mutex.clone(), scan_config);
 
         match tokio::time::timeout(timeout_duration, scan_future).await {
             Ok(_) => {
@@ -120,6 +125,7 @@ impl ScannerService {
     async fn scan_file_inner(
         file_path: PathBuf,
         scanner: Arc<SignatureScanner>,
+        heuristic: Arc<HeuristicScanner>,
         analyzer: Arc<FileAnalyzer>,
         result_mutex: Arc<Mutex<ScanResult>>,
         scan_config: &ScanConfig,
@@ -170,6 +176,44 @@ impl ScannerService {
 
                                 warn!("Threat detected: {} in {}", threat.name, file_path.display());
                                 result.add_threat(threat);
+                            }
+                        }
+
+                        // 휴리스틱 스캔 추가
+                        drop(result); // 뮤텍스 잠금 해제
+
+                        match heuristic.scan_file(&file_path, &analysis).await {
+                            Ok(heuristic_results) => {
+                                let mut result = result_mutex.lock().await;
+
+                                for heuristic_result in heuristic_results {
+                                    if heuristic_result.is_suspicious {
+                                        let severity = match heuristic_result.risk_score {
+                                            9..=10 => ThreatSeverity::Critical,
+                                            7..=8 => ThreatSeverity::High,
+                                            5..=6 => ThreatSeverity::Medium,
+                                            _ => ThreatSeverity::Low,
+                                        };
+
+                                        let threat = Threat::new(
+                                            heuristic_result.rule_name,
+                                            ThreatType::Suspicious,
+                                            severity,
+                                            file_path.clone(),
+                                            analysis.file_hash.clone(),
+                                            analysis.file_size,
+                                            DetectionMethod::Heuristic,
+                                        )
+                                        .with_description(heuristic_result.description)
+                                        .with_action(ThreatAction::Logged);
+
+                                        warn!("Heuristic detection: {} in {}", threat.name, file_path.display());
+                                        result.add_threat(threat);
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                error!("Failed to run heuristic scan on {}: {}", file_path.display(), e);
                             }
                         }
                     }

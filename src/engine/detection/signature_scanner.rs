@@ -47,6 +47,36 @@ impl SignatureScanner {
 
         let mut results = Vec::new();
 
+        // 파일명 기반 검사 (우선 처리)
+        if let Some(filename) = file_path.file_name().and_then(|n| n.to_str()) {
+            // 이중 확장자 검사
+            if filename.matches('.').count() >= 2 {
+                let lower_filename = filename.to_lowercase();
+                if lower_filename.ends_with(".exe") || lower_filename.ends_with(".scr") ||
+                   lower_filename.ends_with(".bat") || lower_filename.ends_with(".cmd") {
+                    results.push(DetectionResult {
+                        signature_name: "Double-Extension-File".to_string(),
+                        is_threat: true,
+                        confidence: 0.9,
+                        description: "File with suspicious double extension".to_string(),
+                    });
+                    info!("Double extension detection: {} for {}", filename, file_path.display());
+                }
+            }
+
+            // 가짜 시스템 파일 검사
+            let lower_filename = filename.to_lowercase();
+            if lower_filename == "svchost.exe" && !file_path.to_string_lossy().contains("System32") {
+                results.push(DetectionResult {
+                    signature_name: "Fake-System-File".to_string(),
+                    is_threat: true,
+                    confidence: 0.8,
+                    description: "Suspicious system file in wrong location".to_string(),
+                });
+                info!("Fake system file detection: {} for {}", filename, file_path.display());
+            }
+        }
+
         // 해시 기반 시그니처 검사
         if let Some(signature) = self.signatures.get(&analysis.file_hash) {
             results.push(DetectionResult {
@@ -142,8 +172,9 @@ impl SignatureScanner {
         // 테스트용 기본 시그니처 로드
         info!("Loading default virus signatures");
 
-        // 알려진 악성 파일 해시 (예시)
+        // 알려진 악성 파일 해시 및 패턴 시그니처
         let test_signatures = vec![
+            // EICAR 테스트 파일
             Signature {
                 name: "EICAR-Test-File".to_string(),
                 hash: self.calculate_eicar_hash(),
@@ -151,19 +182,86 @@ impl SignatureScanner {
                 description: "EICAR antivirus test file".to_string(),
                 threat_level: 1,
             },
+
+            // 의심스러운 PowerShell 스크립트
             Signature {
                 name: "Suspicious-PowerShell".to_string(),
                 hash: String::new(),
-                pattern: Some("powershell.*-encodedcommand".to_string()),
+                pattern: Some("(?i)(powershell.*-encodedcommand|iex.*downloadstring|invoke-expression)".to_string()),
                 description: "Suspicious PowerShell command execution".to_string(),
                 threat_level: 3,
             },
+
+            // PE 헤더 패턴
             Signature {
-                name: "Potential-Malware-1".to_string(),
+                name: "PE-Executable".to_string(),
                 hash: String::new(),
-                pattern: Some("hex:4d5a.*50450000".to_string()), // PE header pattern
-                description: "Potential malware with suspicious PE structure".to_string(),
+                pattern: Some("hex:4d5a.*50450000".to_string()),
+                description: "Portable Executable file detected".to_string(),
+                threat_level: 1,
+            },
+
+            // 의심스러운 VBS 스크립트
+            Signature {
+                name: "Suspicious-VBS".to_string(),
+                hash: String::new(),
+                pattern: Some("(?i)(wscript\\.shell|createobject.*shell|downloadfile)".to_string()),
+                description: "Suspicious VBScript detected".to_string(),
+                threat_level: 3,
+            },
+
+            // 배치 파일 다운로더
+            Signature {
+                name: "Batch-Downloader".to_string(),
+                hash: String::new(),
+                pattern: Some("(?i)(curl.*http|wget.*http|powershell.*downloadfile|bitsadmin.*transfer)".to_string()),
+                description: "Suspicious batch file downloader".to_string(),
+                threat_level: 3,
+            },
+
+            // 매크로 문서
+            Signature {
+                name: "Office-Macro".to_string(),
+                hash: String::new(),
+                pattern: Some("(?i)(auto_open|workbook_open|document_open|shell.*execute)".to_string()),
+                description: "Office document with suspicious macros".to_string(),
                 threat_level: 2,
+            },
+
+            // 랜섬웨어 노트
+            Signature {
+                name: "Ransomware-Note".to_string(),
+                hash: String::new(),
+                pattern: Some("(?i)(ransom|decrypt|bitcoin|cryptocurrency|encrypted.*files|payment.*bitcoin)".to_string()),
+                description: "Potential ransomware note detected".to_string(),
+                threat_level: 5,
+            },
+
+            // 가짜 svchost.exe
+            Signature {
+                name: "Fake-Svchost".to_string(),
+                hash: String::new(),
+                pattern: Some("string:svchost".to_string()),
+                description: "Suspicious file masquerading as svchost.exe".to_string(),
+                threat_level: 4,
+            },
+
+            // 이중 확장자 파일
+            Signature {
+                name: "Double-Extension".to_string(),
+                hash: String::new(),
+                pattern: Some(r"(?i)\.(pdf|doc|txt|jpg|png)\.(exe|scr|bat|cmd|pif)$".to_string()),
+                description: "File with double extension (potential malware)".to_string(),
+                threat_level: 4,
+            },
+
+            // Base64 인코딩된 명령어
+            Signature {
+                name: "Base64-Encoded-Command".to_string(),
+                hash: String::new(),
+                pattern: Some("(?i)(powershell.*-enc|base64.*decode|frombase64string)".to_string()),
+                description: "Base64 encoded command detected".to_string(),
+                threat_level: 3,
             },
         ];
 
