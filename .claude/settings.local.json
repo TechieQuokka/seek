@@ -28,7 +28,8 @@
       "Bash(\"C:\\Users\\seung\\Rust\\Laboratory\\project\\Seek\\target\\debug\\seek.exe\" scan --file \"Cambridge - English Grammar in Use (Intermediate) (2005).pdf\")",
       "Bash(\"C:\\Users\\seung\\Rust\\Laboratory\\project\\Seek\\target\\debug\\seek.exe\" scan --file \"Overlord.The.Scared.Kingdom.2024.1080p.ATVP.WEB-DL.JPN.DD5.1.H.264-ToonsHub.mkv\")",
       "Bash(\"C:\\Users\\seung\\Rust\\Laboratory\\project\\Seek\\target\\debug\\seek.exe\" scan --file \"C:\\Users\\seung\\Downloads\\desktop.ini\")",
-      "Bash(\"C:\\Users\\seung\\Rust\\Laboratory\\project\\Seek\\target\\debug\\seek.exe\" scan --file \"C:\\Users\\seung\\Downloads\\chess-game.html\" --format json)"
+      "Bash(\"C:\\Users\\seung\\Rust\\Laboratory\\project\\Seek\\target\\debug\\seek.exe\" scan --file \"C:\\Users\\seung\\Downloads\\chess-game.html\" --format json)",
+      "Bash(git tag:*)"
     ],
     "deny": [],
     "ask": []

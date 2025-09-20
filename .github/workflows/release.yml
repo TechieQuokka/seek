@@ -97,6 +97,33 @@ jobs:
     - name: Display structure of downloaded files
       run: ls -la
 
+    - name: Prepare release assets
+      run: |
+        # Create release directory
+        mkdir -p release
+
+        # Copy and rename binaries with proper extensions
+        cp seek-x86_64-pc-windows-msvc.exe/seek-x86_64-pc-windows-msvc.exe release/seek-windows-x86_64.exe
+        cp seek-x86_64-apple-darwin/seek-x86_64-apple-darwin release/seek-macos-x86_64
+        cp seek-aarch64-apple-darwin/seek-aarch64-apple-darwin release/seek-macos-arm64
+        cp seek-x86_64-unknown-linux-gnu/seek-x86_64-unknown-linux-gnu release/seek-linux-x86_64
+        cp seek-aarch64-unknown-linux-gnu/seek-aarch64-unknown-linux-gnu release/seek-linux-arm64
+
+        # Make binaries executable
+        chmod +x release/seek-*
+
+        # Create compressed archives
+        cd release
+        zip seek-windows-x86_64.zip seek-windows-x86_64.exe
+        tar -czf seek-macos-x86_64.tar.gz seek-macos-x86_64
+        tar -czf seek-macos-arm64.tar.gz seek-macos-arm64
+        tar -czf seek-linux-x86_64.tar.gz seek-linux-x86_64
+        tar -czf seek-linux-arm64.tar.gz seek-linux-arm64
+        cd ..
+
+        # Show final structure
+        ls -la release/
+
     - name: Generate changelog
       id: changelog
       run: |
@@ -144,10 +171,15 @@ jobs:
         draft: false
         prerelease: false
         files: |
-          seek-x86_64-pc-windows-msvc.exe/seek-x86_64-pc-windows-msvc.exe
-          seek-x86_64-apple-darwin/seek-x86_64-apple-darwin
-          seek-aarch64-apple-darwin/seek-aarch64-apple-darwin
-          seek-x86_64-unknown-linux-gnu/seek-x86_64-unknown-linux-gnu
-          seek-aarch64-unknown-linux-gnu/seek-aarch64-unknown-linux-gnu
+          release/seek-windows-x86_64.exe
+          release/seek-windows-x86_64.zip
+          release/seek-macos-x86_64
+          release/seek-macos-x86_64.tar.gz
+          release/seek-macos-arm64
+          release/seek-macos-arm64.tar.gz
+          release/seek-linux-x86_64
+          release/seek-linux-x86_64.tar.gz
+          release/seek-linux-arm64
+          release/seek-linux-arm64.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
