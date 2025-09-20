@@ -77,6 +77,10 @@ goblin = "0.8"
 pelite = { version = "0.10", optional = true }
 elf = { version = "0.7", optional = true }
 
+# Additional useful dependencies - only what we actually use
+memmap2 = "0.9"  # Memory mapping for efficient large file processing
+mime_guess = "2.0"  # MIME type detection
+
 # Compression
 flate2 = "1.0"
 zip = { version = "0.6", optional = true }
@@ -88,19 +92,31 @@ proptest = "1.4"
 assert_cmd = "2.0"
 predicates = "3.0"
 tempfile = "3.8"
+# Additional testing tools - only what we actually use
+serial_test = "3.0"  # Sequential test execution
+rand = "0.8"  # Random data generation for benchmarks
 
 [[bin]]
 name = "seek"
 path = "src/main.rs"
 
+[[test]]
+name = "cli_tests"
+path = "tests/integration/cli_tests.rs"
+
+[[test]]
+name = "scan_tests"
+path = "tests/integration/scan_tests.rs"
+
 [features]
 default = []
 # clamav = ["clamav-rs", "clamav-sys", "clamav-client"]
 # virustotal = ["virustotal-rs", "vt3", "reqwest"]
-# yara-support = ["yara"]
+yara-support = [] # Add yara support feature flag
 binary-analysis = ["pelite", "elf"]
 database = ["sqlx"]
 compression = ["zip"]
+integration-tests = []  # Enable integration tests
 # full = ["clamav", "virustotal", "yara-support", "binary-analysis", "database", "compression"]
 
 [profile.release]

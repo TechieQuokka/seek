@@ -29,6 +29,8 @@ impl ScannerService {
 
     pub async fn scan_path(&self, path: &Path, scan_config: &ScanConfig) -> Result<ScanResult> {
         info!("Starting scan of path: {}", path.display());
+        debug!("Using scanner config: max_threads={}, max_file_size={}",
+               self.config.scan.max_threads, self.config.scan.max_file_size);
 
         let mut result = ScanResult::new(
             if scan_config.max_file_size < 10 * 1024 * 1024 {

@@ -1,5 +1,4 @@
 // Heuristic scanner placeholder
-use crate::error::Result;
 
 pub struct HeuristicScanner;
 

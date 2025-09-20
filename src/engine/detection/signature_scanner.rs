@@ -58,18 +58,20 @@ impl SignatureScanner {
             info!("Hash-based detection: {} for {}", signature.name, file_path.display());
         }
 
-        // 패턴 기반 시그니처 검사 (파일 내용 읽기 필요)
-        if let Ok(content) = std::fs::read(file_path) {
-            for signature in &self.pattern_signatures {
-                if let Some(pattern) = &signature.pattern {
-                    if self.check_pattern(&content, pattern) {
-                        results.push(DetectionResult {
-                            signature_name: signature.name.clone(),
-                            is_threat: true,
-                            confidence: 0.8,
-                            description: format!("Pattern match: {}", signature.description),
-                        });
-                        info!("Pattern-based detection: {} for {}", signature.name, file_path.display());
+        // 패턴 기반 시그니처 검사 (메모리 매핑을 사용하여 효율적인 파일 처리)
+        if let Ok(file) = std::fs::File::open(file_path) {
+            if let Ok(mmap) = unsafe { memmap2::MmapOptions::new().map(&file) } {
+                for signature in &self.pattern_signatures {
+                    if let Some(pattern) = &signature.pattern {
+                        if self.check_pattern(&*mmap, pattern) {
+                            results.push(DetectionResult {
+                                signature_name: signature.name.clone(),
+                                is_threat: true,
+                                confidence: 0.8,
+                                description: format!("Pattern match: {}", signature.description),
+                            });
+                            info!("Pattern-based detection: {} for {}", signature.name, file_path.display());
+                        }
                     }
                 }
             }
@@ -247,13 +249,13 @@ mod tests {
         let content = b"This is a test with powershell -encodedcommand in it";
         assert!(scanner.check_pattern(content, "powershell.*-encodedcommand"));
 
-        let hex_content = b"\\x4d\\x5a\\x90\\x00";
+        let hex_content = &[0x4d, 0x5a, 0x90, 0x00];
         assert!(scanner.check_pattern(hex_content, "hex:4d5a9000"));
     }
 
     #[test]
     fn test_signature_loading() {
-        let mut scanner = SignatureScanner::new();
+        let scanner = SignatureScanner::new();
         let (hash_count, pattern_count) = scanner.get_signature_count();
 
         assert!(hash_count > 0);

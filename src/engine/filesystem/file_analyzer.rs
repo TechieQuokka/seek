@@ -1,7 +1,7 @@
 use crate::error::Result;
 use sha2::{Digest, Sha256};
 use std::path::{Path, PathBuf};
-use tracing::{debug, warn};
+use tracing::debug;
 
 #[derive(Debug, Clone)]
 pub struct FileAnalysis {
@@ -57,6 +57,12 @@ impl FileAnalyzer {
 
     fn detect_mime_type(&self, file_path: &Path) -> String {
         // 확장자 기반 간단한 MIME 타입 감지
+        // Use mime_guess for more accurate MIME type detection
+        let mime_type = mime_guess::from_path(file_path)
+            .first_or_octet_stream()
+            .to_string();
+
+        // Override with security-focused MIME types for executable files
         if let Some(extension) = file_path.extension().and_then(|ext| ext.to_str()) {
             match extension.to_lowercase().as_str() {
                 "exe" | "msi" | "scr" | "com" | "pif" => "application/x-executable".to_string(),
@@ -67,19 +73,10 @@ impl FileAnalyzer {
                 "py" | "pyc" => "application/x-python".to_string(),
                 "js" | "jse" => "application/javascript".to_string(),
                 "vbs" | "vbe" => "application/x-vbscript".to_string(),
-                "jar" => "application/java-archive".to_string(),
-                "zip" | "rar" | "7z" => "application/x-archive".to_string(),
-                "pdf" => "application/pdf".to_string(),
-                "doc" | "docx" => "application/msword".to_string(),
-                "xls" | "xlsx" => "application/vnd.ms-excel".to_string(),
-                "txt" => "text/plain".to_string(),
-                "html" | "htm" => "text/html".to_string(),
-                "xml" => "text/xml".to_string(),
-                "json" => "application/json".to_string(),
-                _ => "application/octet-stream".to_string(),
+                _ => mime_type,
             }
         } else {
-            "application/octet-stream".to_string()
+            mime_type
         }
     }
 
@@ -105,18 +102,21 @@ impl FileAnalyzer {
     }
 
     async fn calculate_entropy(&self, file_path: &Path) -> Result<f64> {
+        use memmap2::MmapOptions;
+        use std::fs::File;
+
         // 파일이 너무 크면 샘플링만 수행
         let metadata = std::fs::metadata(file_path)?;
         let file_size = metadata.len();
 
         let content = if file_size > 1024 * 1024 {
-            // 1MB 이상이면 처음 1MB만 읽기
-            let mut buffer = vec![0u8; 1024 * 1024];
-            let mut file = std::fs::File::open(file_path)?;
-            use std::io::Read;
-            let bytes_read = file.read(&mut buffer)?;
-            buffer.truncate(bytes_read);
-            buffer
+            // 1MB 이상이면 메모리 매핑을 사용하여 효율적으로 처리
+            let file = File::open(file_path)?;
+            let mmap = unsafe { MmapOptions::new().map(&file)? };
+
+            // 처음 1MB만 샘플링
+            let sample_size = std::cmp::min(1024 * 1024, mmap.len());
+            mmap[..sample_size].to_vec()
         } else {
             std::fs::read(file_path)?
         };

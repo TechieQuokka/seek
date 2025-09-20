@@ -1,7 +1,7 @@
 use crate::cli::{args::ScanArgs, output::OutputFormatter};
 use crate::data::models::{
     config::AppConfig,
-    scan_result::{ScanResult, ScanType},
+    scan_result::{ScanResult, ScanType, ScanStatus},
 };
 use crate::error::Result;
 use crate::services::scanner_service::ScannerService;
@@ -42,25 +42,32 @@ pub async fn execute(args: ScanArgs, config: &AppConfig) -> Result<()> {
     }
 
     // 스캔 실행
-    let mut scan_result = ScanResult::new(scan_type, target_path.clone());
+    let mut scan_result = match scanner_service.scan_path(&target_path, &scan_config).await {
+        Ok(result) => result,
+        Err(e) => {
+            // 에러 발생 시 기본 결과 생성
+            let mut error_result = ScanResult::new(scan_type, target_path.clone());
+            error_result.status = ScanStatus::Failed;
+            OutputFormatter::print_error(&format!("Scan failed: {}", e));
+            return Err(e);
+        }
+    };
 
-    match scanner_service.scan_path(&target_path, &scan_config).await {
-        Ok(result) => {
-            scan_result = result;
-            scan_result.complete();
+    // 스캔 완료 처리
+    scan_result.complete();
 
-            // 결과 출력
-            let output = OutputFormatter::format_scan_result(&scan_result, &args.format)?;
-            println!("{}", output);
+    // 결과 출력
+    let output = OutputFormatter::format_scan_result(&scan_result, &args.format)?;
+    println!("{}", output);
 
-            // 파일 저장
-            if let Some(output_path) = args.output {
-                save_scan_result(&scan_result, &output_path, &args.format)?;
-                OutputFormatter::print_success(&format!("Results saved to: {}", output_path.display()));
-            }
+    // 파일 저장
+    if let Some(output_path) = args.output {
+        save_scan_result(&scan_result, &output_path, &args.format)?;
+        OutputFormatter::print_success(&format!("Results saved to: {}", output_path.display()));
+    }
 
-            // 위협 발견 시 격리 처리
-            if args.quarantine && !scan_result.threats.is_empty() {
+    // 위협 발견 시 격리 처리
+    if args.quarantine && !scan_result.threats.is_empty() {
                 OutputFormatter::print_info("Quarantining detected threats...");
 
                 // TODO: 격리 서비스 구현 후 연동
@@ -71,20 +78,14 @@ pub async fn execute(args: ScanArgs, config: &AppConfig) -> Result<()> {
             }
 
             // 스캔 결과에 따른 종료 코드
-            if scan_result.summary.threats_found > 0 {
-                OutputFormatter::print_warning(&format!(
-                    "Scan completed with {} threats detected",
-                    scan_result.summary.threats_found
-                ));
-                std::process::exit(1);
-            } else {
-                OutputFormatter::print_success("Scan completed successfully - no threats detected");
-            }
-        }
-        Err(e) => {
-            OutputFormatter::print_error(&format!("Scan failed: {}", e));
-            return Err(e);
-        }
+    if scan_result.summary.threats_found > 0 {
+        OutputFormatter::print_warning(&format!(
+            "Scan completed with {} threats detected",
+            scan_result.summary.threats_found
+        ));
+        std::process::exit(1);
+    } else {
+        OutputFormatter::print_success("Scan completed successfully - no threats detected");
     }
 
     Ok(())
@@ -107,8 +108,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_scan_current_directory() {
-        let config = AppConfig::default();
-        let args = ScanArgs {
+        let _config = AppConfig::default();
+        let _args = ScanArgs {
             path: None,
             recursive: false,
             file: None,

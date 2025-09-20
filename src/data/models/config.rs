@@ -22,6 +22,26 @@ pub struct ScanConfig {
     pub heuristic_enabled: bool,
 }
 
+impl Default for ScanConfig {
+    fn default() -> Self {
+        Self {
+            max_threads: num_cpus::get(),
+            max_file_size: 100 * 1024 * 1024, // 100MB
+            timeout: 300, // 5 minutes
+            exclude_patterns: vec![
+                "*.tmp".to_string(),
+                "*.log".to_string(),
+                ".git/*".to_string(),
+                "target/*".to_string(),
+            ],
+            include_patterns: vec!["*".to_string()],
+            scan_archives: true,
+            scan_memory: false,
+            heuristic_enabled: true,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MonitorConfig {
     pub enabled: bool,
