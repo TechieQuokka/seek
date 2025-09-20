@@ -13,7 +13,22 @@
       "Bash(cargo test)",
       "Bash(cargo test:*)",
       "Bash(cargo build:*)",
-      "Bash(cargo bench:*)"
+      "Bash(cargo bench:*)",
+      "Bash(cargo run:*)",
+      "Bash(dir:*)",
+      "Bash(timeout 10 cargo run -- scan --file eicar.txt)",
+      "Bash(python:*)",
+      "Bash(timeout 10 cargo run -- scan --file eicar_test.txt)",
+      "Bash(more:*)",
+      "Bash(cat:*)",
+      "Read(//c/Users/seung/Downloads/**)",
+      "Bash(\"C:\\Users\\seung\\Rust\\Laboratory\\project\\Seek\\target\\debug\\seek.exe\" scan --file \"desktop.ini\")",
+      "Bash(\"C:\\Users\\seung\\Rust\\Laboratory\\project\\Seek\\target\\debug\\seek.exe\" scan --file \"chess-game.html\")",
+      "Bash(\"C:\\Users\\seung\\Rust\\Laboratory\\project\\Seek\\target\\debug\\seek.exe\" scan --file \"IP-Time 관련 정보.txt\")",
+      "Bash(\"C:\\Users\\seung\\Rust\\Laboratory\\project\\Seek\\target\\debug\\seek.exe\" scan --file \"Cambridge - English Grammar in Use (Intermediate) (2005).pdf\")",
+      "Bash(\"C:\\Users\\seung\\Rust\\Laboratory\\project\\Seek\\target\\debug\\seek.exe\" scan --file \"Overlord.The.Scared.Kingdom.2024.1080p.ATVP.WEB-DL.JPN.DD5.1.H.264-ToonsHub.mkv\")",
+      "Bash(\"C:\\Users\\seung\\Rust\\Laboratory\\project\\Seek\\target\\debug\\seek.exe\" scan --file \"C:\\Users\\seung\\Downloads\\desktop.ini\")",
+      "Bash(\"C:\\Users\\seung\\Rust\\Laboratory\\project\\Seek\\target\\debug\\seek.exe\" scan --file \"C:\\Users\\seung\\Downloads\\chess-game.html\" --format json)"
     ],
     "deny": [],
     "ask": []

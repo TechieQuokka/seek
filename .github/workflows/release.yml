@@ -1,0 +1,153 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Windows
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            name: seek-x86_64-pc-windows-msvc.exe
+
+          # macOS
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            name: seek-x86_64-apple-darwin
+
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            name: seek-aarch64-apple-darwin
+
+          # Linux
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: seek-x86_64-unknown-linux-gnu
+
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: seek-aarch64-unknown-linux-gnu
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
+
+    - name: Setup cache
+      uses: Swatinem/rust-cache@v2
+      with:
+        key: ${{ matrix.target }}
+
+    - name: Install cross-compilation tools (Linux ARM64)
+      if: matrix.target == 'aarch64-unknown-linux-gnu'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-aarch64-linux-gnu
+
+    - name: Build
+      run: |
+        cargo build --release --target ${{ matrix.target }}
+
+    - name: Prepare binary (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        copy target\${{ matrix.target }}\release\seek.exe ${{ matrix.name }}
+
+    - name: Prepare binary (Unix)
+      if: matrix.os != 'windows-latest'
+      run: |
+        cp target/${{ matrix.target }}/release/seek ${{ matrix.name }}
+        chmod +x ${{ matrix.name }}
+
+    - name: Archive binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.name }}
+        path: ${{ matrix.name }}
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+
+    - name: Display structure of downloaded files
+      run: ls -la
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        echo "## 🚀 Seek Antivirus CLI v0.0.1" >> CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        echo "### ✨ Features" >> CHANGELOG.md
+        echo "- 🔍 **File & Directory Scanning**: Comprehensive malware detection engine" >> CHANGELOG.md
+        echo "- 🎯 **Signature-based Detection**: EICAR test file and pattern matching" >> CHANGELOG.md
+        echo "- 📊 **Multiple Output Formats**: Table, JSON, CSV, HTML support" >> CHANGELOG.md
+        echo "- ⚡ **High Performance**: Async/parallel scanning with configurable threads" >> CHANGELOG.md
+        echo "- 🛡️ **File Analysis**: Entropy calculation, hash generation, MIME type detection" >> CHANGELOG.md
+        echo "- 📁 **Single File Scanning**: Dedicated --file option for individual file analysis" >> CHANGELOG.md
+        echo "- 🔧 **Configurable Settings**: TOML-based configuration management" >> CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        echo "### 🏗️ Architecture" >> CHANGELOG.md
+        echo "- Built with Rust for memory safety and performance" >> CHANGELOG.md
+        echo "- Tokio async runtime for concurrent operations" >> CHANGELOG.md
+        echo "- Modular engine design (signature scanner, file analyzer)" >> CHANGELOG.md
+        echo "- Cross-platform support (Windows, macOS, Linux)" >> CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        echo "### 📦 Binaries" >> CHANGELOG.md
+        echo "This release includes pre-built binaries for:" >> CHANGELOG.md
+        echo "- Windows (x86_64)" >> CHANGELOG.md
+        echo "- macOS (x86_64, ARM64)" >> CHANGELOG.md
+        echo "- Linux (x86_64, ARM64)" >> CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        echo "### 🎯 Usage" >> CHANGELOG.md
+        echo "\`\`\`bash" >> CHANGELOG.md
+        echo "# Scan current directory" >> CHANGELOG.md
+        echo "seek scan" >> CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        echo "# Scan specific file" >> CHANGELOG.md
+        echo "seek scan --file /path/to/file" >> CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        echo "# Scan with JSON output" >> CHANGELOG.md
+        echo "seek scan --format json" >> CHANGELOG.md
+        echo "\`\`\`" >> CHANGELOG.md
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v0.0.1
+        name: "Seek Antivirus CLI v0.0.1"
+        body_path: CHANGELOG.md
+        draft: false
+        prerelease: false
+        files: |
+          seek-x86_64-pc-windows-msvc.exe/seek-x86_64-pc-windows-msvc.exe
+          seek-x86_64-apple-darwin/seek-x86_64-apple-darwin
+          seek-aarch64-apple-darwin/seek-aarch64-apple-darwin
+          seek-x86_64-unknown-linux-gnu/seek-x86_64-unknown-linux-gnu
+          seek-aarch64-unknown-linux-gnu/seek-aarch64-unknown-linux-gnu
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

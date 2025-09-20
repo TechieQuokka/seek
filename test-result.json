@@ -1,0 +1,32 @@
+{
+  "id": "f1a1acbb-4a9b-49cf-8cb9-eb98073d0388",
+  "scan_type": "Full",
+  "start_time": "2025-09-20T08:04:23.756324800Z",
+  "end_time": "2025-09-20T08:04:27.444111800Z",
+  "duration": {
+    "secs": 3,
+    "nanos": 687787000
+  },
+  "target_path": "C:\\Users\\seung\\Downloads",
+  "summary": {
+    "files_scanned": 7,
+    "directories_scanned": 0,
+    "threats_found": 0,
+    "threats_quarantined": 0,
+    "threats_cleaned": 0,
+    "threats_deleted": 0,
+    "files_skipped": 0,
+    "errors_encountered": 1,
+    "total_size_scanned": 75925234
+  },
+  "threats": [],
+  "errors": [
+    {
+      "file_path": "C:\\Users\\seung\\Downloads\\Overlord.The.Scared.Kingdom.2024.1080p.ATVP.WEB-DL.JPN.DD5.1.H.264-ToonsHub.mkv",
+      "error_type": "FileTooBig",
+      "message": "File size 6913211323 exceeds limit 104857600",
+      "timestamp": "2025-09-20T08:04:23.843845500Z"
+    }
+  ],
+  "status": "Completed"
+}
