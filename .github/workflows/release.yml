@@ -100,7 +100,7 @@ jobs:
     - name: Generate changelog
       id: changelog
       run: |
-        echo "## 🚀 Seek Antivirus CLI v0.0.1" >> CHANGELOG.md
+        echo "## 🚀 Seek Antivirus CLI v0.1.1" >> CHANGELOG.md
         echo "" >> CHANGELOG.md
         echo "### ✨ Features" >> CHANGELOG.md
         echo "- 🔍 **File & Directory Scanning**: Comprehensive malware detection engine" >> CHANGELOG.md
@@ -138,8 +138,8 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: v0.0.1
-        name: "Seek Antivirus CLI v0.0.1"
+        tag_name: v0.1.1
+        name: "Seek Antivirus CLI v0.1.1"
         body_path: CHANGELOG.md
         draft: false
         prerelease: false
