@@ -117,7 +117,11 @@ pub async fn execute(args: ScanArgs, config: &AppConfig) -> Result<()> {
             "Scan completed with {} threats detected",
             scan_result.summary.threats_found
         ));
-        std::process::exit(1);
+
+        // --success-exit 플래그가 있으면 위협이 있어도 exit code 0 반환
+        if !args.success_exit {
+            std::process::exit(1);
+        }
     } else {
         OutputFormatter::print_success("Scan completed successfully - no threats detected");
     }
@@ -156,6 +160,7 @@ mod tests {
             quick: true,
             format: crate::cli::args::OutputFormat::Json,
             output: None,
+            success_exit: false,
         };
 
         // 실제 스캔 테스트는 모킹된 서비스로 진행

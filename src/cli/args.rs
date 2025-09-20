@@ -91,6 +91,10 @@ pub struct ScanArgs {
     /// 결과를 파일로 저장
     #[arg(short, long, value_name = "FILE")]
     pub output: Option<PathBuf>,
+
+    /// 위협 발견 시에도 성공 종료 코드(0) 반환
+    #[arg(long)]
+    pub success_exit: bool,
 }
 
 #[derive(Parser, Debug)]
